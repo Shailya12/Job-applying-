@@ -13,6 +13,20 @@ const state = {
 // API Base URL (local server)
 const API_URL = '';
 
+// Get API request headers containing user's client-side API Key
+function getApiHeaders() {
+  const key = localStorage.getItem('user_api_key') || '';
+  return {
+    'Content-Type': 'application/json',
+    'x-api-key': key
+  };
+}
+
+// Get the user's selected Claude model
+function getSelectedModel() {
+  return localStorage.getItem('user_model') || 'claude-haiku-4-5-20251001';
+}
+
 // DOM Elements
 const panels = document.querySelectorAll('.panel');
 const navItems = document.querySelectorAll('.nav-item');
@@ -432,8 +446,8 @@ tailorForm.addEventListener('submit', async (e) => {
     // 2. Perform JD Analysis
     const analysisRes = await fetch(`${API_URL}/api/analyze-jd`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jd, company, role })
+      headers: getApiHeaders(),
+      body: JSON.stringify({ jd, company, role, model: getSelectedModel() })
     });
     
     if (!analysisRes.ok) {
@@ -448,8 +462,8 @@ tailorForm.addEventListener('submit', async (e) => {
     
     const resumeRes = await fetch(`${API_URL}/api/tailor-resume`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jd, company, role })
+      headers: getApiHeaders(),
+      body: JSON.stringify({ jd, company, role, model: getSelectedModel() })
     });
 
     if (!resumeRes.ok) {
@@ -801,8 +815,8 @@ document.getElementById('btn-generate-prep').addEventListener('click', async () 
   try {
     const res = await fetch(`${API_URL}/api/generate-prep`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jd: job.jd, company: job.company, role: job.role })
+      headers: getApiHeaders(),
+      body: JSON.stringify({ jd: job.jd, company: job.company, role: job.role, model: getSelectedModel() })
     });
     
     if (!res.ok) {
@@ -1087,22 +1101,42 @@ function parseMarkdownToHTML(md) {
 
 // --- SETTINGS CONTROLLER ---
 async function loadSettingsData() {
+  // Load values from localStorage
+  const savedKey = localStorage.getItem('user_api_key') || '';
+  const savedModel = localStorage.getItem('user_model') || 'claude-haiku-4-5-20251001';
+  
+  document.getElementById('settings-api-key').value = savedKey;
+  document.getElementById('settings-model-select').value = savedModel;
+
   // Check API Status
   try {
-    const apiRes = await fetch(`${API_URL}/api/test-claude`);
+    const apiRes = await fetch(`${API_URL}/api/test-claude`, {
+      headers: getApiHeaders()
+    });
     const status = await apiRes.json();
     const indicator = document.querySelector('#api-status .status-indicator');
-    const textSpan = document.querySelector('#api-status span:last-child');
+    const textSpan = document.getElementById('api-status-text');
     
-    if (status.hasKey) {
+    if (status.verified) {
       indicator.className = 'status-indicator active';
-      textSpan.textContent = 'API Connected & Ready (Claude API key verified)';
+      if (savedKey) {
+        textSpan.textContent = 'API Connected & Ready (User API key verified)';
+      } else {
+        textSpan.textContent = 'API Connected & Ready (Server-side default API key verified)';
+      }
+    } else if (status.status === 'error') {
+      indicator.className = 'status-indicator';
+      textSpan.textContent = `API Verification Failed: ${status.error}`;
     } else {
       indicator.className = 'status-indicator';
-      textSpan.textContent = 'API key missing in local configuration';
+      textSpan.textContent = 'API key missing in both client and server configuration';
     }
   } catch (err) {
     console.error(err);
+    const indicator = document.querySelector('#api-status .status-indicator');
+    const textSpan = document.getElementById('api-status-text');
+    indicator.className = 'status-indicator';
+    textSpan.textContent = 'Failed to connect to local server';
   }
 
   // Fetch base resume
@@ -1115,23 +1149,53 @@ async function loadSettingsData() {
   }
 }
 
-// Save Key
+// Save Key & Model Configuration
 document.getElementById('btn-save-key').addEventListener('click', async () => {
-  const keyInput = document.getElementById('settings-api-key').value;
-  if (!keyInput) {
-    showToast('Please type a key');
-    return;
-  }
+  const keyInput = document.getElementById('settings-api-key').value.trim();
+  const modelSelect = document.getElementById('settings-model-select').value;
   
-  // Wait, saving API key locally to express server would require writing to .env
-  // Let's implement writing settings API key. To make it simple, we can send it to an update route, 
-  // or store in settings or we can write a simple route. Wait, server.js doesn't have an api key update route,
-  // but wait: we can write it in server.js or we can tell them to use the key provided in .env which is already loaded!
-  // Since the key is already stored in .env by our backend setup, it's already active! 
-  // Let's just show a toast indicating it is saved, or we can just mock save for this local environment.
-  // Actually, let's mock it because we already hardcoded it into `.env` upon creation.
-  showToast('API Key configured in environment successfully!');
+  localStorage.setItem('user_api_key', keyInput);
+  localStorage.setItem('user_model', modelSelect);
+  
+  showToast('API Configuration saved successfully!');
   loadSettingsData();
+});
+
+// Test Key Button
+document.getElementById('btn-test-key').addEventListener('click', async () => {
+  const keyInput = document.getElementById('settings-api-key').value.trim();
+  
+  showLoader('Verifying API Key...', 'Sending test ping to Anthropic API...');
+  try {
+    const res = await fetch(`${API_URL}/api/test-claude`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ apiKey: keyInput })
+    });
+    
+    if (!res.ok) throw new Error('API test request failed');
+    const result = await res.json();
+    
+    const indicator = document.querySelector('#api-status .status-indicator');
+    const textSpan = document.getElementById('api-status-text');
+    
+    if (result.verified) {
+      showToast('API Key verified successfully!');
+      indicator.className = 'status-indicator active';
+      textSpan.textContent = 'API Connected & Ready (verified)';
+    } else {
+      showToast('API Key verification failed!');
+      indicator.className = 'status-indicator';
+      textSpan.textContent = `API Verification Failed: ${result.error || 'Invalid API Key'}`;
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to verify API Key');
+  } finally {
+    hideLoader();
+  }
 });
 
 // Save Base Resume

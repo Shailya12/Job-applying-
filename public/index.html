@@ -480,20 +480,38 @@
           </div>
 
           <div class="settings-grid">
-            <!-- API Key -->
+            <!-- API Key & Model Configuration -->
             <div class="card settings-card">
-              <h3>Claude API Integration</h3>
-              <div class="form-group">
-                <label for="settings-api-key">Anthropic Claude API Key</label>
+              <h3>🔒 Local API & Model Configuration</h3>
+              <p class="field-help" style="margin-bottom: 16px; color: var(--text-glow);">
+                <strong>Client-Side Security Mode:</strong> Your API Key is stored directly in your own browser's secure cache (localStorage). It is sent dynamically in request headers and is never written to server logs or disks.
+              </p>
+              
+              <div class="form-group" style="margin-bottom: 16px;">
+                <label for="settings-api-key">Your Anthropic Claude API Key</label>
                 <div class="api-key-input-container">
                   <input type="password" id="settings-api-key" placeholder="sk-ant-...">
                   <button class="btn btn-secondary" id="btn-save-key">Save Key</button>
+                  <button class="btn btn-accent" id="btn-test-key">Test Key</button>
                 </div>
-                <p class="field-help">Your API key is stored securely in a local `.env` configuration file on your machine.</p>
+                <p class="field-help">Leave empty to use the server's default configuration.</p>
               </div>
+
+              <div class="form-group" style="margin-bottom: 16px;">
+                <label for="settings-model-select">Target Claude Model for Generations</label>
+                <select id="settings-model-select" style="background-color: var(--bg-input); border: 1px solid var(--border); padding: 10px; border-radius: 8px; font-size: 14px; color: var(--text-main); width: 100%;">
+                  <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (Cost-efficient & Fast)</option>
+                  <option value="claude-sonnet-4-5-20250929">Claude Sonnet 4.5 (Highly Balanced)</option>
+                  <option value="claude-sonnet-4-6">Claude Sonnet 4.6 (Flagship Writer)</option>
+                  <option value="claude-opus-4-8">Claude Opus 4.8 (Premium Reasoning)</option>
+                  <option value="claude-fable-5">Claude Fable 5 (Experimental)</option>
+                </select>
+                <p class="field-help">Select the default model you want to run for resume writing and interview prep.</p>
+              </div>
+
               <div class="api-status-badge" id="api-status">
-                <span class="status-indicator active"></span>
-                <span>API Connected Successfully</span>
+                <span class="status-indicator"></span>
+                <span id="api-status-text">Checking API connection status...</span>
               </div>
             </div>
 

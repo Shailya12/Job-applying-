@@ -254,9 +254,31 @@ function cleanAndParseJSON(text) {
   }
 }
 
+// Helper: Sanitize strings to prevent API key leaks
+const sanitizeApiKey = (text) => {
+  if (typeof text !== 'string') return text;
+  return text.replace(/sk-ant-[a-zA-Z0-9_-]+/g, '[REDACTED_API_KEY]');
+};
+
+// Helper: Log error securely by removing any possible API keys
+const logSecureError = (label, err) => {
+  const message = err && err.message ? err.message : String(err);
+  const stack = err && err.stack ? err.stack : '';
+  console.error(`${label} ${sanitizeApiKey(message)}`, sanitizeApiKey(stack));
+};
+
+// Helper: Get Anthropic client using the key from the request header (or environment fallback)
+const getAnthropicClient = (req) => {
+  const apiKey = req.headers['x-api-key'] || process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error('Anthropic API Key is missing. Please configure your key in Settings first.');
+  }
+  return new Anthropic({ apiKey });
+};
+
 // 9. POST Analyze Job Description (Match score + gap analysis)
 app.post('/api/analyze-jd', async (req, res) => {
-  const { jd, company, role } = req.body;
+  const { jd, company, role, model } = req.body;
   if (!jd) {
     return res.status(400).json({ error: 'Job description is required' });
   }
@@ -270,6 +292,9 @@ app.post('/api/analyze-jd', async (req, res) => {
   }
 
   try {
+    const client = getAnthropicClient(req);
+    const selectedModel = model || 'claude-haiku-4-5-20251001';
+
     const systemPrompt = `You are an expert ATS (Applicant Tracking System) recruiter and Career Coach. 
 Analyze the job description (JD) against the user's base resume.
 You MUST refer to the following skills to guide your analysis:
@@ -304,8 +329,8 @@ ${jd}
 User Base Resume:
 ${baseResume}`;
 
-    const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+    const response = await client.messages.create({
+      model: selectedModel,
       max_tokens: 3000,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }]
@@ -314,14 +339,14 @@ ${baseResume}`;
     const parsedResult = cleanAndParseJSON(response.content[0].text);
     res.json(parsedResult);
   } catch (err) {
-    console.error('Claude JD Analysis error:', err);
-    res.status(500).json({ error: 'AI analysis failed: ' + err.message });
+    logSecureError('Claude JD Analysis error:', err);
+    res.status(500).json({ error: 'AI analysis failed: ' + sanitizeApiKey(err.message) });
   }
 });
 
 // 10. POST Tailor Resume (Strictly 1-page structured JSON output)
 app.post('/api/tailor-resume', async (req, res) => {
-  const { jd, company, role } = req.body;
+  const { jd, company, role, model } = req.body;
   if (!jd) {
     return res.status(400).json({ error: 'Job description is required' });
   }
@@ -338,6 +363,9 @@ app.post('/api/tailor-resume', async (req, res) => {
   }
 
   try {
+    const client = getAnthropicClient(req);
+    const selectedModel = model || 'claude-haiku-4-5-20251001';
+
     const systemPrompt = `You are an elite Resume Writer and Career Coach specializing in AI product management, coordination, and tech positions.
 Your task is to tailor the user's base resume specifically to the provided Job Description (JD).
 
@@ -412,8 +440,8 @@ ${jd}
 Base Resume:
 ${baseResume}`;
 
-    const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+    const response = await client.messages.create({
+      model: selectedModel,
       max_tokens: 4000,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }]
@@ -422,18 +450,34 @@ ${baseResume}`;
     const parsedResult = cleanAndParseJSON(response.content[0].text);
     res.json(parsedResult);
   } catch (err) {
-    console.error('Claude Resume Tailoring error:', err);
-    res.status(500).json({ error: 'AI tailoring failed: ' + err.message });
+    logSecureError('Claude Resume Tailoring error:', err);
+    res.status(500).json({ error: 'AI tailoring failed: ' + sanitizeApiKey(err.message) });
   }
 });
 
-// 11. POST Generate Interview Prep Q&A (STAR format)
-app.get('/api/test-claude', (req, res) => {
-  res.json({ status: 'active', hasKey: !!process.env.ANTHROPIC_API_KEY });
+// 11. GET/POST verify connection
+app.all('/api/test-claude', async (req, res) => {
+  const apiKey = req.headers['x-api-key'] || req.body.apiKey || process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return res.json({ status: 'inactive', hasKey: false });
+  }
+
+  try {
+    const tempAnthropic = new Anthropic({ apiKey });
+    await tempAnthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1,
+      messages: [{ role: 'user', content: 'Ping' }]
+    });
+    res.json({ status: 'active', hasKey: true, verified: true });
+  } catch (err) {
+    res.json({ status: 'error', hasKey: true, verified: false, error: sanitizeApiKey(err.message) });
+  }
 });
 
+// 12. POST Generate Interview Prep Q&A (STAR format)
 app.post('/api/generate-prep', async (req, res) => {
-  const { jd, company, role } = req.body;
+  const { jd, company, role, model } = req.body;
   if (!jd) {
     return res.status(400).json({ error: 'Job description is required' });
   }
@@ -446,6 +490,9 @@ app.post('/api/generate-prep', async (req, res) => {
   }
 
   try {
+    const client = getAnthropicClient(req);
+    const selectedModel = model || 'claude-haiku-4-5-20251001';
+
     const systemPrompt = `You are an elite Interview Coach. 
 Analyze the job description and the user's base resume. Generate exactly 10 interview preparation questions and answers tailored to this role.
 Use the STAR method (Situation, Task, Action, Result) for behavioral answers.
@@ -478,8 +525,8 @@ ${jd}
 User Base Resume:
 ${baseResume}`;
 
-    const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+    const response = await client.messages.create({
+      model: selectedModel,
       max_tokens: 4000,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }]
@@ -488,8 +535,8 @@ ${baseResume}`;
     const parsedResult = cleanAndParseJSON(response.content[0].text);
     res.json(parsedResult);
   } catch (err) {
-    console.error('Claude Prep Generation error:', err);
-    res.status(500).json({ error: 'AI prep generation failed: ' + err.message });
+    logSecureError('Claude Prep Generation error:', err);
+    res.status(500).json({ error: 'AI prep generation failed: ' + sanitizeApiKey(err.message) });
   }
 });
 
