@@ -1,6 +1,7 @@
 // State Management
 const state = {
   activePanel: 'dashboard',
+  previousPanel: 'dashboard',
   jobs: [],
   skills: [],
   selectedJobForPrep: null,
@@ -65,6 +66,10 @@ function hideLoader() {
 
 // --- NAVIGATION & VIEW MANAGEMENT ---
 function switchPanel(panelId) {
+  if (state.activePanel !== panelId) {
+    state.previousPanel = state.activePanel;
+  }
+
   panels.forEach(p => p.classList.remove('active'));
   navItems.forEach(n => n.classList.remove('active'));
 
@@ -1196,6 +1201,12 @@ document.getElementById('btn-test-key').addEventListener('click', async () => {
   } finally {
     hideLoader();
   }
+});
+
+// Back Button on Resume Tailor Page
+document.getElementById('btn-tailor-back').addEventListener('click', () => {
+  const prev = state.previousPanel || 'dashboard';
+  switchPanel(prev);
 });
 
 // Save Base Resume
