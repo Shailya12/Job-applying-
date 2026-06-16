@@ -92,6 +92,8 @@ function switchPanel(panelId) {
     loadSettingsData();
   } else if (panelId === 'interview-prep') {
     populatePrepJobSelector();
+  } else if (panelId === 'resume-tailor') {
+    populateTailorJobSelector();
   }
 }
 
@@ -428,6 +430,59 @@ window.loadPrepForJob = function(jobId) {
   loadInterviewPrepForJob(jobId);
 };
 
+// Populate Job Selector for Resume Tailor page
+async function populateTailorJobSelector() {
+  await fetchJobs();
+  const select = document.getElementById('tailor-job-select');
+  if (!select) return;
+  
+  select.innerHTML = '<option value="new">-- Create New / Start from Scratch --</option>';
+  
+  state.jobs.forEach(job => {
+    const opt = document.createElement('option');
+    opt.value = job.id;
+    opt.textContent = `${job.role} at ${job.company}`;
+    select.appendChild(opt);
+  });
+  
+  select.value = state.activeTailoredJobId || 'new';
+}
+
+// Bind Job Selector Change Event
+document.getElementById('tailor-job-select').addEventListener('change', (e) => {
+  const jobId = e.target.value;
+  if (jobId === 'new') {
+    state.activeTailoredJobId = null;
+    document.getElementById('tailor-company').value = '';
+    document.getElementById('tailor-role').value = '';
+    document.getElementById('tailor-link').value = '';
+    document.getElementById('tailor-jd').value = '';
+    resetAnalysisUI();
+    resetResumeUI();
+  } else {
+    const job = state.jobs.find(j => j.id === jobId);
+    if (!job) return;
+    state.activeTailoredJobId = job.id;
+    document.getElementById('tailor-company').value = job.company;
+    document.getElementById('tailor-role').value = job.role;
+    document.getElementById('tailor-link').value = job.link || '';
+    document.getElementById('tailor-jd').value = job.jd;
+    
+    if (job.analysis) {
+      displayAnalysisResults(job.analysis);
+    } else {
+      resetAnalysisUI();
+    }
+    
+    if (job.tailoredResume) {
+      state.tailoredResumeJSON = job.tailoredResume;
+      displayTailoredResume(job.tailoredResume);
+    } else {
+      resetResumeUI();
+    }
+  }
+});
+
 // --- RESUME TAILOR CONTROLLER ---
 const tailorForm = document.getElementById('tailor-form');
 tailorForm.addEventListener('submit', async (e) => {
@@ -508,6 +563,7 @@ tailorForm.addEventListener('submit', async (e) => {
     });
 
     showToast('Analysis & tailored resume created successfully');
+    await populateTailorJobSelector();
   } catch (err) {
     console.error(err);
     alert(err.message);
