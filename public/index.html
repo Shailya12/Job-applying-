@@ -10,6 +10,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- html2pdf Library for Client-side PDF Conversion -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <!-- Stylesheets -->
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="resume_template.css">
@@ -310,6 +312,7 @@
               <div class="workspace-tabs">
                 <button class="w-tab active" data-tab="analysis-tab"><i data-lucide="pie-chart"></i> Match Analysis</button>
                 <button class="w-tab" data-tab="resume-tab" id="tab-resume-preview"><i data-lucide="file-text"></i> Tailored Resume</button>
+                <button class="w-tab" data-tab="markdown-tab" id="tab-markdown-preview"><i data-lucide="edit-3"></i> Markdown Editor</button>
               </div>
 
               <!-- TAB CONTENT: ANALYSIS -->
@@ -376,6 +379,23 @@
                     </div>
                   </div>
                   <p class="print-instruction"><i data-lucide="info"></i> Tip: Click anywhere in the resume above to edit text directly before printing or saving.</p>
+                </div>
+              </div>
+
+              <!-- TAB CONTENT: MARKDOWN -->
+              <div class="tab-content" id="markdown-tab">
+                <div class="card hollow empty-state-workspace" id="markdown-empty">
+                  <i data-lucide="edit-3"></i>
+                  <h4>No Markdown Loaded</h4>
+                  <p>Your tailored resume markdown will appear here once generated.</p>
+                </div>
+
+                <div class="markdown-workspace-area" id="markdown-workspace-area" style="display: none; flex-direction: column; gap: 16px; height: 100%;">
+                  <div class="workspace-actions" style="margin-bottom: 12px;">
+                    <button class="btn btn-secondary btn-sm" id="btn-compile-markdown"><i data-lucide="play"></i> Compile & Preview</button>
+                    <button class="btn btn-primary btn-sm" id="btn-markdown-to-pdf"><i data-lucide="file-down"></i> Convert to PDF</button>
+                  </div>
+                  <textarea id="markdown-editor-textarea" style="flex-grow: 1; background-color: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 16px; font-family: monospace; font-size: 13px; color: var(--text-main); outline: none; width: 100%; min-height: 500px; resize: vertical; box-sizing: border-box;"></textarea>
                 </div>
               </div>
             </div>

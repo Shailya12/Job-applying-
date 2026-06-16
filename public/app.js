@@ -643,6 +643,14 @@ function displayTailoredResume(data) {
 
   const preview = document.getElementById('resume-preview-container');
   preview.innerHTML = renderTailoredResumeTemplate(data);
+
+  // Sync Markdown Editor
+  document.getElementById('markdown-empty').style.display = 'none';
+  const mdArea = document.getElementById('markdown-workspace-area');
+  if (mdArea) {
+    mdArea.style.display = 'flex';
+    document.getElementById('markdown-editor-textarea').value = generateResumeMarkdown(data);
+  }
 }
 
 function resetAnalysisUI() {
@@ -653,6 +661,10 @@ function resetAnalysisUI() {
 function resetResumeUI() {
   document.getElementById('resume-empty').style.display = 'flex';
   document.getElementById('resume-workspace-area').style.display = 'none';
+
+  // Reset Markdown UI
+  document.getElementById('markdown-empty').style.display = 'flex';
+  document.getElementById('markdown-workspace-area').style.display = 'none';
 }
 
 // Render JSON to HTML resume structure
@@ -768,12 +780,10 @@ document.getElementById('btn-save-resume-log').addEventListener('click', async (
   }
 });
 
-// Copy resume markdown to clipboard
-document.getElementById('btn-copy-md').addEventListener('click', () => {
-  if (!state.tailoredResumeJSON) return;
-  const data = state.tailoredResumeJSON;
-  
-  const md = `# ${data.name.toUpperCase()}
+// Helper: Generate structured Markdown representation from resume JSON
+function generateResumeMarkdown(data) {
+  if (!data) return '';
+  return `# ${data.name.toUpperCase()}
 ${data.contact.location} | ${data.contact.phone} | ${data.contact.email} | ${data.contact.linkedin}
 
 ## PROFESSIONAL SUMMARY
@@ -796,7 +806,162 @@ ${data.projects.map(proj => `- **${proj.title}:** ${proj.details}`).join('\n')}
 ## EDUCATION
 ${data.education.map(edu => `- **${edu.institution}**: ${edu.degree} (${edu.dates}) - ${edu.location}`).join('\n')}
 `;
+}
 
+// Helper: Parse edited Markdown back into structured resume JSON
+function parseMarkdownToResumeJSON(md) {
+  const lines = md.split('\n');
+  const data = {
+    name: 'SHAILYA GOHIL',
+    contact: { location: '', phone: '', email: '', linkedin: '' },
+    summary: '',
+    skills: { core: [], technical: [], tools: [] },
+    experience: [],
+    projects: [],
+    education: []
+  };
+
+  let currentSection = '';
+  let currentExperience = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i].trim();
+    if (!line) continue;
+
+    // Name (Header 1)
+    if (line.startsWith('# ')) {
+      data.name = line.substring(2).trim();
+      continue;
+    }
+
+    // Contact line (contains location | phone | email | linkedin)
+    if (line.includes('|') && !line.startsWith('|') && currentSection === '') {
+      const parts = line.split('|').map(p => p.trim());
+      if (parts.length >= 1) data.contact.location = parts[0];
+      if (parts.length >= 2) data.contact.phone = parts[1];
+      if (parts.length >= 3) data.contact.email = parts[2];
+      if (parts.length >= 4) data.contact.linkedin = parts[3];
+      continue;
+    }
+
+    // Sections (Header 2)
+    if (line.startsWith('## ')) {
+      const title = line.substring(3).trim().toUpperCase();
+      if (title.includes('SUMMARY')) {
+        currentSection = 'summary';
+      } else if (title.includes('SKILLS') || title.includes('COMPETENCIES')) {
+        currentSection = 'skills';
+      } else if (title.includes('EXPERIENCE')) {
+        currentSection = 'experience';
+      } else if (title.includes('PROJECTS')) {
+        currentSection = 'projects';
+      } else if (title.includes('EDUCATION')) {
+        currentSection = 'education';
+      } else {
+        currentSection = '';
+      }
+      continue;
+    }
+
+    // Section Content parsing
+    if (currentSection === 'summary') {
+      data.summary = (data.summary ? data.summary + '\n' : '') + line;
+    } else if (currentSection === 'skills') {
+      if (line.toLowerCase().includes('capabilities:') || line.toLowerCase().includes('core:')) {
+        const skillsText = line.split(':')[1] || '';
+        data.skills.core = skillsText.split(',').map(s => s.trim()).filter(Boolean);
+        if (data.skills.core.length === 1 && skillsText.includes('•')) {
+          data.skills.core = skillsText.split('•').map(s => s.trim()).filter(Boolean);
+        }
+      } else if (line.toLowerCase().includes('technical:') || line.toLowerCase().includes('ai:')) {
+        const skillsText = line.split(':')[1] || '';
+        data.skills.technical = skillsText.split(',').map(s => s.trim()).filter(Boolean);
+        if (data.skills.technical.length === 1 && skillsText.includes('•')) {
+          data.skills.technical = skillsText.split('•').map(s => s.trim()).filter(Boolean);
+        }
+      } else if (line.toLowerCase().includes('tools:')) {
+        const skillsText = line.split(':')[1] || '';
+        data.skills.tools = skillsText.split(',').map(s => s.trim()).filter(Boolean);
+        if (data.skills.tools.length === 1 && skillsText.includes('•')) {
+          data.skills.tools = skillsText.split('•').map(s => s.trim()).filter(Boolean);
+        }
+      }
+    } else if (currentSection === 'experience') {
+      if (line.startsWith('### ')) {
+        if (currentExperience) {
+          data.experience.push(currentExperience);
+        }
+        const parts = line.substring(4).split('|').map(p => p.trim());
+        currentExperience = {
+          company: parts[0] || '',
+          location: parts[1] || '',
+          role: '',
+          dates: '',
+          bullets: []
+        };
+      } else if (line.startsWith('*') && currentExperience) {
+        const match = line.match(/\*(.*?)\*\s*\((.*?)\)/);
+        if (match) {
+          currentExperience.role = match[1].trim();
+          currentExperience.dates = match[2].trim();
+        } else {
+          currentExperience.role = line.replace(/\*/g, '').trim();
+        }
+      } else if (line.startsWith('- ') && currentExperience) {
+        currentExperience.bullets.push(line.substring(2).trim());
+      }
+    } else if (currentSection === 'projects') {
+      if (line.startsWith('- ')) {
+        const text = line.substring(2).trim();
+        const parts = text.split(':');
+        const title = parts[0] || '';
+        const details = parts.slice(1).join(':').trim();
+        data.projects.push({
+          title: title.replace(/\*\*/g, '').trim(),
+          details: details
+        });
+      }
+    } else if (currentSection === 'education') {
+      if (line.startsWith('- ')) {
+        const text = line.substring(2).trim();
+        const parts = text.split(':');
+        const inst = parts[0] || '';
+        const rest = parts.slice(1).join(':').trim();
+        
+        let degree = '';
+        let dates = '';
+        let loc = '';
+        
+        const match = rest.match(/(.*?)\((.*?)\)\s*-\s*(.*)/);
+        if (match) {
+          degree = match[1].trim();
+          dates = match[2].trim();
+          loc = match[3].trim();
+        } else {
+          degree = rest;
+        }
+        
+        data.education.push({
+          institution: inst.replace(/\*\*/g, '').trim(),
+          degree: degree,
+          dates: dates,
+          location: loc
+        });
+      }
+    }
+  }
+
+  if (currentExperience) {
+    data.experience.push(currentExperience);
+  }
+
+  return data;
+}
+
+// Copy resume markdown to clipboard
+document.getElementById('btn-copy-md').addEventListener('click', () => {
+  if (!state.tailoredResumeJSON) return;
+  const md = generateResumeMarkdown(state.tailoredResumeJSON);
   navigator.clipboard.writeText(md).then(() => {
     showToast('Markdown copied to clipboard!');
   });
@@ -805,6 +970,82 @@ ${data.education.map(edu => `- **${edu.institution}**: ${edu.degree} (${edu.date
 // Trigger A4 Resume Printing
 document.getElementById('btn-print-resume').addEventListener('click', () => {
   window.print();
+});
+
+// Compile Markdown to Preview
+document.getElementById('btn-compile-markdown').addEventListener('click', () => {
+  const mdText = document.getElementById('markdown-editor-textarea').value;
+  if (!mdText.trim()) {
+    showToast('Please enter some markdown content');
+    return;
+  }
+  
+  try {
+    const parsedData = parseMarkdownToResumeJSON(mdText);
+    state.tailoredResumeJSON = parsedData;
+    
+    // Render and display compiled HTML
+    displayTailoredResume(parsedData);
+    
+    // Switch to Tailored Resume tab
+    document.getElementById('tab-resume-preview').click();
+    showToast('Markdown compiled & updated in preview!');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to compile markdown');
+  }
+});
+
+// Convert Markdown to PDF
+document.getElementById('btn-markdown-to-pdf').addEventListener('click', () => {
+  const mdText = document.getElementById('markdown-editor-textarea').value;
+  if (!mdText.trim()) {
+    showToast('Please enter some markdown content');
+    return;
+  }
+
+  if (typeof html2pdf === 'undefined') {
+    showToast('PDF Library loading... Please try again in a second.');
+    return;
+  }
+
+  showLoader('Generating PDF...', 'Converting markdown to print-perfect PDF...');
+  
+  try {
+    const parsedData = parseMarkdownToResumeJSON(mdText);
+    
+    // Create temporary element configured exactly like A4 print page
+    const element = document.createElement('div');
+    element.className = 'resume-a4-page';
+    element.style.width = '210mm';
+    element.style.height = '297mm';
+    element.style.padding = '12mm 15mm';
+    element.style.boxShadow = 'none';
+    element.style.margin = '0';
+    element.style.boxSizing = 'border-box';
+    element.innerHTML = renderTailoredResumeTemplate(parsedData);
+    
+    const opt = {
+      margin:       0,
+      filename:     `${parsedData.name.replace(/\s+/g, '_')}_Resume.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    html2pdf().set(opt).from(element).save().then(() => {
+      hideLoader();
+      showToast('PDF downloaded successfully!');
+    }).catch(err => {
+      console.error(err);
+      hideLoader();
+      showToast('Failed to download PDF');
+    });
+  } catch (err) {
+    console.error(err);
+    hideLoader();
+    showToast('Failed to generate PDF');
+  }
 });
 
 // Switch between workspace tabs
