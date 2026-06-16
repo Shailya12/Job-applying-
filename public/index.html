@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apex Career Suite - Job Tracker & AI Co-Pilot</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="resume_template.css">
+</head>
+<body>
+
+  <!-- App Container -->
+  <div class="app-container">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="logo-area">
+        <div class="logo-icon"><i data-lucide="sparkles"></i></div>
+        <h2>APEX<span>SUITE</span></h2>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-target="dashboard">
+          <i data-lucide="layout-dashboard"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" data-target="jobs-log">
+          <i data-lucide="clipboard-list"></i>
+          <span>Applications Log</span>
+        </a>
+        <a href="#" class="nav-item" data-target="resume-tailor">
+          <i data-lucide="file-text"></i>
+          <span>Resume Tailor</span>
+        </a>
+        <a href="#" class="nav-item" data-target="interview-prep">
+          <i data-lucide="messages-square"></i>
+          <span>Interview Prep</span>
+        </a>
+        <a href="#" class="nav-item" data-target="skills-browser">
+          <i data-lucide="brain-circuit"></i>
+          <span>Skills Directory</span>
+        </a>
+        <a href="#" class="nav-item" data-target="settings">
+          <i data-lucide="settings"></i>
+          <span>Settings</span>
+        </a>
+      </nav>
+      <div class="user-badge">
+        <div class="user-avatar">SG</div>
+        <div class="user-info">
+          <h4>Shailya Gohil</h4>
+          <p>Product Manager</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- HEADER -->
+      <header class="top-header">
+        <div class="header-search">
+          <i data-lucide="search"></i>
+          <input type="text" placeholder="Search applications, companies, skills...">
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-secondary quick-add-btn" id="btn-quick-add">
+            <i data-lucide="plus"></i> Add Job
+          </button>
+          <div class="theme-toggle">
+            <i data-lucide="moon"></i>
+          </div>
+        </div>
+      </header>
+
+      <!-- PANELS CONTAINER -->
+      <div class="panels-container">
+        
+        <!-- PANEL: DASHBOARD -->
+        <section id="panel-dashboard" class="panel active">
+          <div class="panel-header">
+            <div>
+              <h1>Career Dashboard</h1>
+              <p class="subtitle">Real-time application pipeline and analytics.</p>
+            </div>
+            <div class="quick-status-bar">
+              <span class="pulse-indicator"></span>
+              <p>Next target: Land an Interview this week!</p>
+            </div>
+          </div>
+
+          <!-- Stats Grid -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon applied"><i data-lucide="send"></i></div>
+              <div class="stat-data">
+                <h3 id="stat-applied">0</h3>
+                <p>Applied</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon interviewing"><i data-lucide="calendar"></i></div>
+              <div class="stat-data">
+                <h3 id="stat-interviewing">0</h3>
+                <p>Interviewing</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon offered"><i data-lucide="award"></i></div>
+              <div class="stat-data">
+                <h3 id="stat-offered">0</h3>
+                <p>Offers Received</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon matching"><i data-lucide="trending-up"></i></div>
+              <div class="stat-data">
+                <h3 id="stat-match-avg">0%</h3>
+                <p>Avg Match Score</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Board & Sidebar Layout -->
+          <div class="dashboard-split">
+            <!-- Kanban Column Board -->
+            <div class="kanban-section">
+              <div class="section-header">
+                <h2>Application Pipeline</h2>
+                <span class="info-badge">Drag & drop to update status</span>
+              </div>
+              <div class="kanban-board">
+                <div class="kanban-column" data-status="Wishlist">
+                  <div class="column-header">
+                    <h3>Wishlist</h3>
+                    <span class="count" id="count-wishlist">0</span>
+                  </div>
+                  <div class="kanban-cards" id="col-wishlist"></div>
+                </div>
+                <div class="kanban-column" data-status="Applied">
+                  <div class="column-header">
+                    <h3>Applied</h3>
+                    <span class="count" id="count-applied">0</span>
+                  </div>
+                  <div class="kanban-cards" id="col-applied"></div>
+                </div>
+                <div class="kanban-column" data-status="Interviewing">
+                  <div class="column-header">
+                    <h3>Interviewing</h3>
+                    <span class="count" id="count-interviewing">0</span>
+                  </div>
+                  <div class="kanban-cards" id="col-interviewing"></div>
+                </div>
+                <div class="kanban-column" data-status="Offered">
+                  <div class="column-header">
+                    <h3>Offered</h3>
+                    <span class="count" id="count-offered">0</span>
+                  </div>
+                  <div class="kanban-cards" id="col-offered"></div>
+                </div>
+                <div class="kanban-column" data-status="Rejected">
+                  <div class="column-header">
+                    <h3>Stopped/Archived</h3>
+                    <span class="count" id="count-rejected">0</span>
+                  </div>
+                  <div class="kanban-cards" id="col-rejected"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Sidebar: Highlights & AI Tips -->
+            <div class="dashboard-right-sidebar">
+              <div class="card interview-alerts">
+                <div class="card-header">
+                  <h3>Upcoming Dates</h3>
+                  <i data-lucide="bell" class="text-accent"></i>
+                </div>
+                <div class="interview-list" id="upcoming-events-list">
+                  <p class="empty-state">No upcoming interviews scheduled yet.</p>
+                </div>
+              </div>
+
+              <div class="card ai-tips-card">
+                <div class="card-header">
+                  <h3>AI Coach Suggestions</h3>
+                  <i data-lucide="zap" class="text-glow"></i>
+                </div>
+                <div class="ai-tips-content">
+                  <div class="tip-item">
+                    <div class="tip-icon"><i data-lucide="check-circle-2"></i></div>
+                    <div class="tip-text">
+                      <h4>Tailor for every application</h4>
+                      <p>Use the Resume Tailor with your <strong>Claude API</strong> key to increase match rates above 75%.</p>
+                    </div>
+                  </div>
+                  <div class="tip-item">
+                    <div class="tip-icon"><i data-lucide="hourglass"></i></div>
+                    <div class="tip-text">
+                      <h4>Quick Follow Up</h4>
+                      <p>If you haven't heard back in 7 days, trigger a gentle follow-up email from the tracker.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PANEL: APPLICATIONS LOG -->
+        <section id="panel-jobs-log" class="panel">
+          <div class="panel-header">
+            <div>
+              <h1>Applications Log</h1>
+              <p class="subtitle">Complete history and logs of your job hunt.</p>
+            </div>
+            <button class="btn btn-primary" id="btn-add-job-panel"><i data-lucide="plus"></i> Add New Application</button>
+          </div>
+
+          <div class="card table-card">
+            <div class="table-toolbar">
+              <div class="filter-group">
+                <button class="filter-btn active" data-filter="All">All</button>
+                <button class="filter-btn" data-filter="Wishlist">Wishlist</button>
+                <button class="filter-btn" data-filter="Applied">Applied</button>
+                <button class="filter-btn" data-filter="Interviewing">Interviewing</button>
+                <button class="filter-btn" data-filter="Offered">Offered</button>
+                <button class="filter-btn" data-filter="Rejected">Archived</button>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="jobs-table">
+                <thead>
+                  <tr>
+                    <th>Role & Company</th>
+                    <th>Date Logged</th>
+                    <th>Status</th>
+                    <th>Match Score</th>
+                    <th>JD</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="jobs-table-body">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- PANEL: RESUME TAILOR -->
+        <section id="panel-resume-tailor" class="panel">
+          <div class="panel-header">
+            <div>
+              <h1>Resume Tailor Workshop</h1>
+              <p class="subtitle">Tailor your base resume to job descriptions using expert skills.</p>
+            </div>
+          </div>
+
+          <div class="tailor-workspace">
+            <!-- Left Form Input -->
+            <div class="tailor-input-card card">
+              <h3>Job Details & JD</h3>
+              <form id="tailor-form" class="form-grid">
+                <div class="form-group col-6">
+                  <label for="tailor-company">Company Name</label>
+                  <input type="text" id="tailor-company" placeholder="e.g. Google" required>
+                </div>
+                <div class="form-group col-6">
+                  <label for="tailor-role">Role Title</label>
+                  <input type="text" id="tailor-role" placeholder="e.g. Associate Product Manager" required>
+                </div>
+                <div class="form-group col-12">
+                  <label for="tailor-link">Job Listing URL (Optional)</label>
+                  <input type="url" id="tailor-link" placeholder="https://careers.google.com/jobs/...">
+                </div>
+                <div class="form-group col-12">
+                  <label for="tailor-jd">Paste Job Description / Requirements</label>
+                  <textarea id="tailor-jd" rows="12" placeholder="Paste the job requirements, responsibilities, and qualifications here..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" id="btn-tailor-start">
+                  <i data-lucide="cpu"></i> Analyze & Tailor Resume
+                </button>
+              </form>
+            </div>
+
+            <!-- Right Workspace tabs -->
+            <div class="tailor-output-container">
+              <div class="workspace-tabs">
+                <button class="w-tab active" data-tab="analysis-tab"><i data-lucide="pie-chart"></i> Match Analysis</button>
+                <button class="w-tab" data-tab="resume-tab" id="tab-resume-preview"><i data-lucide="file-text"></i> Tailored Resume</button>
+              </div>
+
+              <!-- TAB CONTENT: ANALYSIS -->
+              <div class="tab-content active" id="analysis-tab">
+                <div class="card hollow empty-state-workspace" id="analysis-empty">
+                  <i data-lucide="bar-chart-2"></i>
+                  <h4>No Analysis Generated</h4>
+                  <p>Paste a job description and click "Analyze & Tailor" to get a detailed ATS audit and match report.</p>
+                </div>
+
+                <div class="analysis-results" id="analysis-results-area" style="display: none;">
+                  <div class="match-score-header">
+                    <div class="score-radial">
+                      <svg viewBox="0 0 36 36" class="circular-chart">
+                        <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="circle" id="radial-score-bar" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <text x="18" y="20.35" class="percentage" id="radial-score-text">0%</text>
+                      </svg>
+                    </div>
+                    <div class="recommendation-text">
+                      <h2 id="analysis-recommendation">Excellent Fit</h2>
+                      <p>Priority: <strong id="analysis-priority">HIGH</strong></p>
+                      <p id="analysis-strategy" class="strategy-desc"></p>
+                    </div>
+                  </div>
+
+                  <div class="gaps-strengths-grid">
+                    <div class="analysis-subcard">
+                      <h3>Core Strengths</h3>
+                      <ul class="check-list" id="analysis-strengths-list"></ul>
+                    </div>
+                    <div class="analysis-subcard">
+                      <h3>Gaps Identified</h3>
+                      <ul class="cross-list" id="analysis-gaps-list"></ul>
+                    </div>
+                  </div>
+
+                  <div class="requirements-checklist">
+                    <h3>Required Skills Audit</h3>
+                    <div class="checklist-items" id="analysis-req-skills"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- TAB CONTENT: RESUME -->
+              <div class="tab-content" id="resume-tab">
+                <div class="card hollow empty-state-workspace" id="resume-empty">
+                  <i data-lucide="file-check"></i>
+                  <h4>No Resume Generated</h4>
+                  <p>Your tailored single-page resume will appear here once generated.</p>
+                </div>
+
+                <div class="resume-workspace-area" id="resume-workspace-area" style="display: none;">
+                  <div class="workspace-actions">
+                    <button class="btn btn-secondary btn-sm" id="btn-print-resume"><i data-lucide="printer"></i> Print / Save PDF</button>
+                    <button class="btn btn-secondary btn-sm" id="btn-copy-md"><i data-lucide="copy"></i> Copy Markdown</button>
+                    <button class="btn btn-accent btn-sm" id="btn-save-resume-log"><i data-lucide="check"></i> Save to Application Log</button>
+                  </div>
+                  
+                  <!-- Resume A4 Container -->
+                  <div class="resume-a4-wrapper">
+                    <div class="resume-a4-page" id="resume-preview-container" contenteditable="true">
+                      <!-- Rendered HTML template goes here -->
+                    </div>
+                  </div>
+                  <p class="print-instruction"><i data-lucide="info"></i> Tip: Click anywhere in the resume above to edit text directly before printing or saving.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PANEL: INTERVIEW PREP -->
+        <section id="panel-interview-prep" class="panel">
+          <div class="panel-header">
+            <div>
+              <h1>Interview Prep Center</h1>
+              <p class="subtitle">Prepare custom STAR method questions and answers tailored to specific roles.</p>
+            </div>
+          </div>
+
+          <div class="prep-dashboard">
+            <!-- Job selector header -->
+            <div class="card selector-card">
+              <label for="prep-job-select">Select a Job Application to Prepare For:</label>
+              <div class="selector-actions">
+                <select id="prep-job-select">
+                  <option value="">-- Choose an application --</option>
+                </select>
+                <button class="btn btn-primary" id="btn-generate-prep"><i data-lucide="wand-2"></i> Generate STAR Q&A</button>
+              </div>
+            </div>
+
+            <!-- Prep content area -->
+            <div class="prep-workspace" id="prep-workspace" style="display: none;">
+              <!-- Left Flashcard -->
+              <div class="flashcard-container">
+                <div class="flashcard" id="flashcard">
+                  <!-- Front -->
+                  <div class="card-side front">
+                    <span class="card-type-badge" id="card-type">BEHAVIORAL</span>
+                    <h2 id="card-question">Tell me about a time you had to resolve a conflict in a development team.</h2>
+                    <div class="flip-hint">Click Card to Flip & View STAR Answer <i data-lucide="rotate-3d"></i></div>
+                  </div>
+                  <!-- Back -->
+                  <div class="card-side back">
+                    <div class="star-details">
+                      <div class="star-phase"><span class="badge s">S</span> <p id="card-situation"></p></div>
+                      <div class="star-phase"><span class="badge t">T</span> <p id="card-task"></p></div>
+                      <div class="star-phase"><span class="badge a">A</span> <p id="card-action"></p></div>
+                      <div class="star-phase"><span class="badge r">R</span> <p id="card-result"></p></div>
+                    </div>
+                    <div class="coach-tips">
+                      <strong><i data-lucide="info"></i> Coach Tip:</strong>
+                      <span id="card-tip"></span>
+                    </div>
+                    <div class="flip-hint">Click Card to Flip Back <i data-lucide="rotate-3d"></i></div>
+                  </div>
+                </div>
+
+                <div class="card-navigation">
+                  <button class="btn-nav" id="btn-card-prev"><i data-lucide="chevron-left"></i></button>
+                  <span id="card-counter">1 / 10</span>
+                  <button class="btn-nav" id="btn-card-next"><i data-lucide="chevron-right"></i></button>
+                </div>
+
+                <div class="card-grading">
+                  <button class="btn btn-danger btn-sm" id="btn-mark-retry">Needs Review</button>
+                  <button class="btn btn-success btn-sm" id="btn-mark-mastered">Mastered</button>
+                </div>
+              </div>
+
+              <!-- Right Questions List -->
+              <div class="questions-list-sidebar card">
+                <h3>Preparation Questions</h3>
+                <div class="q-list" id="q-list-container">
+                  <!-- populated by JS -->
+                </div>
+              </div>
+            </div>
+
+            <div class="card hollow empty-state-workspace" id="prep-empty">
+              <i data-lucide="messages-square"></i>
+              <h4>No Interview Prep Selected</h4>
+              <p>Select an application above and click "Generate STAR Q&A" to start your practice session.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- PANEL: SKILLS BROWSER -->
+        <section id="panel-skills-browser" class="panel">
+          <div class="panel-header">
+            <div>
+              <h1>Skills Directory</h1>
+              <p class="subtitle">Browse the 20 system-integrated skills used to optimize your applications.</p>
+            </div>
+          </div>
+
+          <div class="skills-split">
+            <div class="skills-grid" id="skills-grid-container">
+              <!-- populated by JS -->
+            </div>
+            
+            <div class="skill-detail-viewer card" id="skill-viewer-card">
+              <div class="viewer-header">
+                <h3 id="skill-viewer-title">Select a Skill</h3>
+                <span class="badge" id="skill-viewer-badge">No Skill Selected</span>
+              </div>
+              <div class="viewer-body" id="skill-viewer-body">
+                <p class="empty-state">Click on any skill on the left to view its rules, constraints, and AI guidance.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PANEL: SETTINGS -->
+        <section id="panel-settings" class="panel">
+          <div class="panel-header">
+            <div>
+              <h1>Settings</h1>
+              <p class="subtitle">Manage configuration, Base Resume, and API integration.</p>
+            </div>
+          </div>
+
+          <div class="settings-grid">
+            <!-- API Key -->
+            <div class="card settings-card">
+              <h3>Claude API Integration</h3>
+              <div class="form-group">
+                <label for="settings-api-key">Anthropic Claude API Key</label>
+                <div class="api-key-input-container">
+                  <input type="password" id="settings-api-key" placeholder="sk-ant-...">
+                  <button class="btn btn-secondary" id="btn-save-key">Save Key</button>
+                </div>
+                <p class="field-help">Your API key is stored securely in a local `.env` configuration file on your machine.</p>
+              </div>
+              <div class="api-status-badge" id="api-status">
+                <span class="status-indicator active"></span>
+                <span>API Connected Successfully</span>
+              </div>
+            </div>
+
+            <!-- Base Resume -->
+            <div class="card settings-card col-12">
+              <div class="settings-card-header">
+                <h3>Base Resume (Master Copy)</h3>
+                <button class="btn btn-primary btn-sm" id="btn-save-base-resume">Save Base Resume</button>
+              </div>
+              <p class="field-help">This is the default resume that Claude will read and tailor for each job application. Edits here affect future generations.</p>
+              <textarea id="settings-resume-editor" class="resume-editor-textarea" rows="22"></textarea>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- MODAL: ADD JOB -->
+  <div class="modal" id="modal-add-job">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Add Job Application</h2>
+        <button class="modal-close" id="modal-close-btn">&times;</button>
+      </div>
+      <form id="modal-add-job-form">
+        <div class="form-group">
+          <label for="modal-company">Company</label>
+          <input type="text" id="modal-company" placeholder="e.g. Stripe" required>
+        </div>
+        <div class="form-group">
+          <label for="modal-role">Role / Position</label>
+          <input type="text" id="modal-role" placeholder="e.g. Technical Project Manager" required>
+        </div>
+        <div class="form-group">
+          <label for="modal-link">Job Post Link</label>
+          <input type="url" id="modal-link" placeholder="e.g. https://stripe.com/jobs/...">
+        </div>
+        <div class="form-group">
+          <label for="modal-status">Status</label>
+          <select id="modal-status">
+            <option value="Wishlist">Wishlist / Draft</option>
+            <option value="Applied">Applied</option>
+            <option value="Interviewing">Interviewing</option>
+            <option value="Offered">Offered</option>
+            <option value="Rejected">Stopped/Archived</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="modal-date">Date Applied</label>
+          <input type="date" id="modal-date" required>
+        </div>
+        <div class="form-group">
+          <label for="modal-jd">Job Description (JD)</label>
+          <textarea id="modal-jd" rows="5" placeholder="Paste JD here..."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Log</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loading-overlay" style="display: none;">
+    <div class="loader-content">
+      <div class="spinner"></div>
+      <h3 id="loading-title">Analyzing Job Description...</h3>
+      <p id="loading-subtitle">Calling Claude API & applying recruitment skills.</p>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast" style="display: none;">
+    <span id="toast-message">Application logged successfully!</span>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
